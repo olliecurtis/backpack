@@ -31,7 +31,7 @@ const DefaultExample = () => (
     <BpkBadge>Normal</BpkBadge>
     &nbsp;
     <BpkBadge>
-      <BpkSmallTickIcon /> &nbsp;Normal
+      <BpkSmallTickIcon /> Test
     </BpkBadge>
   </BadgeLayout>
 );

@@ -32,6 +32,9 @@ export default () => (
 )
 ```
 
+
+THIS IS A CHANGE
+
 ### withAccordionItemState(BpkAccordionItem)
 
 The `withAccordionItemState` higher-order component is used to allow multiple items to be expanded simultaneously.
