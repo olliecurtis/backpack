@@ -49,7 +49,6 @@ jobs:
         uses: tj-actions/changed-files@v44
         with:
           dir_names: 'true'
-          separator: '/'
           files_yaml: |
             examples:
               - examples/**
@@ -62,20 +61,23 @@ jobs:
 
       - name: Run step if examples file(s) change
       # NOTE: Ensure all outputs are prefixed by the same key used above e.g. `test_(...)` | `doc_(...)` | `src_(...)` when trying to access the `any_changed` output.
-        if: steps.changed-files.outputs.examples_any_changed == 'true'
+        if: steps.changed-files.outputs.examples_any_changed == 'true' || steps.changed-files.outputs.components_any_changed == 'true'
         env:
           EXAMPLES_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.examples_all_changed_files }}
+          COMPONENTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.components_all_changed_files }}
         run: |
           echo "One or more test file(s) has changed."
+          echo $EXAMPLES_ALL_CHANGED_FILES
+          echo $COMPONENTS_ALL_CHANGED_FILES
           node changedFileParser.js $EXAMPLES_ALL_CHANGED_FILES
 
 #  echo "List all the files that have changed: $EXAMPLES_ALL_CHANGED_FILES"
 
-      - name: Run step if component file(s) change
-      # NOTE: Ensure all outputs are prefixed by the same key used above e.g. `test_(...)` | `doc_(...)` | `src_(...)` when trying to access the `any_changed` output.
-        if: steps.changed-files.outputs.components_any_changed == 'true'
-        env:
-          COMPONENTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.components_all_changed_files }}
-        run: |
-          echo "One or more test file(s) has changed."
-          echo "List all the files that have changed: $COMPONENTS_ALL_CHANGED_FILES"
+#      - name: Run step if component file(s) change
+#      # NOTE: Ensure all outputs are prefixed by the same key used above e.g. `test_(...)` | `doc_(...)` | `src_(...)` when trying to access the `any_changed` output.
+#        if: steps.changed-files.outputs.components_any_changed == 'true'
+#        env:
+#          COMPONENTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.components_all_changed_files }}
+#        run: |
+#          echo "One or more test file(s) has changed."
+#          echo "List all the files that have changed: $COMPONENTS_ALL_CHANGED_FILES"
