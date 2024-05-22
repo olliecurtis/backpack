@@ -37,7 +37,7 @@ jobs:
       - name: Record file check output
       # NOTE: Ensure all outputs are prefixed by the same key used above e.g. `test_(...)` | `doc_(...)` | `src_(...)` when trying to access the `any_changed` output.
         id: visual_tests_check
-        run: requires_visual_tests=${{ steps.changed-files.outputs.examples_any_changed == 'true' || steps.changed-files.outputs.components_any_changed == 'true'}}
+        run: echo "requires_visual_tests=${{ steps.changed-files.outputs.examples_any_changed == 'true' || steps.changed-files.outputs.components_any_changed == 'true'}}" >> "$GITHUB_OUTPUT"
 #        if: steps.changed-files.outputs.examples_any_changed == 'true' || steps.changed-files.outputs.components_any_changed == 'true'
 #        env:
 #          EXAMPLES_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.examples_all_changed_files }}
