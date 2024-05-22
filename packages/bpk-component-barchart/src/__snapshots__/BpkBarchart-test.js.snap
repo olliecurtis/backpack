@@ -3,6 +3,8 @@
 exports[`BpkBarchart should render correctly 1`] = `
 <DocumentFragment>
   <div
+
+    id="1"
     class="bpk-mobile-scroll-container"
     style="height: auto;"
   >

@@ -24,7 +24,7 @@ import BpkBadge, { BADGE_TYPES } from './BpkBadge';
 
 import type { BadgeType } from './BpkBadge';
 
-describe('BpkBadge', () => {
+describe('BpkBadge Tests', () => {
   it('should render correctly', () => {
     const { asFragment } = render(<BpkBadge>Promociando</BpkBadge>);
     expect(asFragment()).toMatchSnapshot();

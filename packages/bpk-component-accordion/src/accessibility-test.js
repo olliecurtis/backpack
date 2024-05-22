@@ -24,7 +24,7 @@ import { axe } from 'jest-axe';
 import BpkAccordion from './BpkAccordion';
 import BpkAccordionItem from './BpkAccordionItem';
 
-describe('BpkAccordion accessibility tests', () => {
+describe('BpkAccordion accessibility', () => {
   it('should not have programmatically-detectable accessibility issues', async () => {
     const { container } = render(
       <BpkAccordion>
