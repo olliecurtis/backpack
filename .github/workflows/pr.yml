@@ -48,7 +48,6 @@ jobs:
         id: changed-files
         uses: tj-actions/changed-files@v44
         with:
-          dir_names: 'true'
           files_yaml: |
             examples:
               - examples/**
@@ -69,7 +68,6 @@ jobs:
           echo "One or more test file(s) has changed."
           echo $EXAMPLES_ALL_CHANGED_FILES
           echo $COMPONENTS_ALL_CHANGED_FILES
-          node changedFileParser.js $EXAMPLES_ALL_CHANGED_FILES
 
 #  echo "List all the files that have changed: $EXAMPLES_ALL_CHANGED_FILES"
 
