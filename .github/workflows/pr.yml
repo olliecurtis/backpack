@@ -75,7 +75,7 @@ jobs:
           --fail
 
   PercyTests:
-    if: (needs.visual-files-changed.outputs.requires-visual == 'true')
+    if: (needs.PR.outputs.requires-visual == 'true')
     runs-on: ubuntu-latest
     needs: PR
     permissions:
