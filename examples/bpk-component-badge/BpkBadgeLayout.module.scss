@@ -25,6 +25,7 @@
     display: flex;
     min-height: tokens.bpk-spacing-xxl();
     padding: tokens.bpk-spacing-lg();
+    color: #fff;
 
     &--light {
       background-color: tokens.$bpk-canvas-contrast-day;

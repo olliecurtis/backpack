@@ -10,6 +10,8 @@ exports[`BpkBadge should render correctly 1`] = `
 </DocumentFragment>
 `;
 
+
+
 exports[`BpkBadge should render correctly with a "centered" 1`] = `
 <DocumentFragment>
   <span

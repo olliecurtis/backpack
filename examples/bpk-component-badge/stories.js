@@ -39,6 +39,7 @@ export default {
 };
 
 export const Default = DefaultExample;
+export const Test = DefaultExample;
 export const Warning = WarningExample;
 export const Success = SuccessExample;
 export const Critical = CriticalExample;

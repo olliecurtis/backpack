@@ -221,6 +221,9 @@ const StatefulDropdownChips = ({ ...rest }) => (
     <StatefulDropdownChip {...rest} disabled>
       Seats
     </StatefulDropdownChip>
+    <StatefulDropdownChip {...rest}>
+      Fuel type
+    </StatefulDropdownChip>
   </div>
 );
 
