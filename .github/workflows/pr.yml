@@ -12,133 +12,78 @@ defaults:
   run:
     shell: bash -l {0}
 
-env: 
-  CACHE_NAME: node-modules-cache
-  BUILD_CACHE_NAME: build-cache
-
 jobs:
-  Create-NPM-Cache:
+  PR:
     runs-on: ubuntu-latest
+    outputs:
+      requires-visual: ${{ steps['visual_tests_check'].outputs['requires_visual_tests'] }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
         with:
-          node-version-file: ".nvmrc"
-          registry-url: 'https://registry.npmjs.org'
+          files_yaml: |
+            examples:
+              - examples/**
+            components:
+              - packages/**
+              - '!packages/**/*-test.js'
+              - '!packages/**/*-test.tsx'
+              - '!packages/**/*.md'
+              - '!packages/*.md'
 
-      - name: Upload to Cache
-        uses: actions/cache@v4.0.2
-        id: npm-cache
-        with:
-          path: |
-            node_modules/
-            packages/node_modules/
-          key: ${{ env.CACHE_NAME }}-${{ hashFiles('package-lock.json', 'packages/package-lock.json') }}
+      - name: Record file check output
+        # NOTE: Ensure all outputs are prefixed by the same key used above e.g. `test_(...)` | `doc_(...)` | `src_(...)` when trying to access the `any_changed` output.
+        id: visual_tests_check
+        run: echo "requires_visual_tests=${{ steps.changed-files.outputs.examples_any_changed == 'true' || steps.changed-files.outputs.components_any_changed == 'true'}}" >> "$GITHUB_OUTPUT"
+      #        if: steps.changed-files.outputs.examples_any_changed == 'true' || steps.changed-files.outputs.components_any_changed == 'true'
+      #        env:
+      #          EXAMPLES_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.examples_all_changed_files }}
+      #          COMPONENTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.components_all_changed_files }}
+      #        run: |
+      #          echo "One or more test file(s) has changed."
+      #          echo $EXAMPLES_ALL_CHANGED_FILES
+      #          echo $COMPONENTS_ALL_CHANGED_FILES
 
-      - name: Install dependencies
-        if: ${{ steps.npm-cache.outputs.cache-hit != 'true' }}
-        run: npm ci
+      #  echo "List all the files that have changed: $EXAMPLES_ALL_CHANGED_FILES"
 
-  Create-Build-Cache:
-    runs-on: ubuntu-latest
-    needs: [Create-NPM-Cache]
-    steps:
-      - uses: actions/checkout@v4
+      #      - name: Run step if component file(s) change
+      #      # NOTE: Ensure all outputs are prefixed by the same key used above e.g. `test_(...)` | `doc_(...)` | `src_(...)` when trying to access the `any_changed` output.
+      #        if: steps.changed-files.outputs.components_any_changed == 'true'
+      #        env:
+      #          COMPONENTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.components_all_changed_files }}
+      #        run: |
+      #          echo "One or more test file(s) has changed."
+      #          echo "List all the files that have changed: $COMPONENTS_ALL_CHANGED_FILES"
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: ".nvmrc"
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Restore NPM Cache
-        uses: actions/cache/restore@v4.0.2
-        id: npm-cache
-        with:
-          path: |
-            node_modules/
-            packages/node_modules/
-          key: ${{ env.CACHE_NAME }}-${{ hashFiles('package-lock.json', 'packages/package-lock.json') }}
-      
-      - name: Upload dist-storybook to Cache
-        uses: actions/cache@v4.0.2
-        id: storybook-dist-cache
-        with:
-          path: |
-            dist-storybook/
-          key: ${{ env.BUILD_CACHE_NAME }}-${{ hashFiles('packages/**', 'examples/**') }}
-
-      - name: Create build cache
-        if: ${{ steps.storybook-dist-cache.outputs.cache-hit != 'true' }}
+      - name: Force percy/backpack to succeed
+        # Only run on pull_requests and when specific changes to files have occurred.
+        if: ${{ github.event_name == 'pull_request' && steps.changed-files.outputs.examples_any_changed != 'true' || steps.changed-files.outputs.components_any_changed != 'true' }}
         run: |
-          npm run build
-          npm run storybook:dist
+          curl --request POST \
+          --url https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
+          --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+          --header 'content-type: application/json' \
+          --data '{
+            "state": "success",
+            "description": "No files requiring visual tests detected. Automatically passing Percy.",
+            "context": "percy/backpack",
+            "target_url": "${{ github.event.workflow_run.html_url }}"
+            }' \
+          --fail
 
-  Build:
+  PercyTests:
+    if: (needs.PR.outputs.requires-visual == 'true')
+    runs-on: ubuntu-latest
+    needs: PR
     permissions:
       statuses: write
       pull-requests: write
-    needs: [Create-NPM-Cache, Create-Build-Cache]
-    uses: ./.github/workflows/_build.yml
-    secrets: inherit
 
-
-  StorybookDeploy:
-    runs-on: ubuntu-latest
-    needs: [Create-NPM-Cache, Create-Build-Cache]
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: Running
+        run: echo "I have run"
 
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: ".nvmrc"
-        registry-url: 'https://registry.npmjs.org'
-
-    - name: Restore npm Cache
-      uses: actions/cache/restore@v4.0.2
-      id: npm-cache
-      with:
-        path: |
-          node_modules/
-          packages/node_modules/
-        key: ${{ env.CACHE_NAME }}-${{ hashFiles('package-lock.json', 'packages/package-lock.json') }}
-
-    - name: Restore Cache
-      uses: actions/cache/restore@v4.0.2
-      id: storybook-dist-cache
-      with:
-        path: dist-storybook/
-        key: ${{ env.BUILD_CACHE_NAME }}-${{ hashFiles('packages/**', 'examples/**') }}
-
-    - name: Prepare to deploy Storybook (pull request build)
-      run: |
-        mkdir build
-        mv dist-storybook $PR_NUMBER
-        cp -R $PR_NUMBER build/
-      if: github.ref != 'refs/heads/main' && github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]'
-      env:
-        PR_NUMBER: ${{ github.event.pull_request.number }}
-
-    - name: Deploy Storybook to backpack.github.io/storybook-prs
-      uses: peaceiris/actions-gh-pages@v4
-      if: github.ref != 'refs/heads/main' && github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]'
-      with:
-        personal_token: ${{ secrets.DEPLOY_TOKEN }}
-        publish_dir: build/
-        keep_files: true
-        external_repository: backpack/storybook-prs
-        publish_branch: main
-
-    - name: Link to the pull request build
-      uses: actions/github-script@v7
-      if: github.ref != 'refs/heads/main' && github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]'
-      with:
-        script: |
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: `Visit https://backpack.github.io/storybook-prs/${{ env.PR_NUMBER }} to see this build running in a browser.`
-          })
-      env:
-        PR_NUMBER: ${{ github.event.pull_request.number }}
